@@ -60,8 +60,20 @@ public class DictionaryConnection {
      *
      */
     public synchronized void close() {
-
-        // TODO Add your code here
+        try {
+            if (pw != null) {
+                pw.println("QUIT");
+            }
+            if (socket != null) {
+                socket.close();
+            }
+        } catch (Exception e) {
+            // Ignores exception as spec
+        } finally {
+            socket = null;
+            br = null;
+            pw = null;
+        }
     }
 
     /** Requests and retrieves all definitions for a specific word.
