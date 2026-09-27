@@ -89,7 +89,42 @@ public class DictionaryConnection {
     public synchronized Collection<Definition> getDefinitions(String word, Database database) throws DictConnectionException {
         Collection<Definition> set = new ArrayList<>();
 
-        // TODO Add your code here
+        try {
+
+            pw.println("DEFINE " + database.getName() + " \"" + word + "\"");
+            Status status = Status.readStatus(br);
+
+            if (status.getStatusCode() >= 500){
+                return set;
+            }
+            if (status.getStatusCode() != 150) {
+                throw new DictConnectionException();
+            }
+
+            while(true){
+                Status s = Status.readStatus(br);
+
+                if (s.getStatusCode() == 250) {
+                    break;
+                }
+                if (s.getStatusCode() != 151) {
+                    throw new DictConnectionException();
+                }
+
+                String[] atoms = DictStringParser.splitAtoms(s.getDetails());
+                Definition def = new Definition(atoms[0], atoms[1]);
+
+                String line;
+
+                while ((line = br.readLine()) != null && !line.equals(".")) {
+                    def.appendDefinition(line);
+                }
+
+                set.add(def);
+            }
+        } catch (IOException e) {
+            throw new DictConnectionException(e);
+        }
 
         return set;
     }
