@@ -9,6 +9,7 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.*;
 import java.io.InputStreamReader;
+import java.io.IOException;
 /**
  * Created by Jonatan on 2017-09-09.
  */
@@ -142,7 +143,31 @@ public class DictionaryConnection {
     public synchronized Set<String> getMatchList(String word, MatchingStrategy strategy, Database database) throws DictConnectionException {
         Set<String> set = new LinkedHashSet<>();
 
-        // TODO Add your code here
+        try {
+            pw.println("MATCH " + database.getName() + " " + strategy.getName() + " " + word);
+            Status status = Status.readStatus(br);
+
+            if (status.getStatusCode() >= 500){
+                return set;
+            }
+            if (status.getStatusCode() != 152) {
+                throw new DictConnectionException();
+            }
+
+            String line;
+            while ((line = br.readLine()) != null && !line.equals(".")) {
+                String[] atoms = DictStringParser.splitAtoms(line);
+                set.add(atoms[1]);
+            }
+
+            Status s = Status.readStatus(br);
+            if (s.getStatusCode() != 250) {
+                throw new DictConnectionException();
+            }
+
+        } catch (IOException e) {
+            throw new DictConnectionException(e);
+        }
 
         return set;
     }
@@ -155,7 +180,31 @@ public class DictionaryConnection {
     public synchronized Map<String, Database> getDatabaseList() throws DictConnectionException {
         Map<String, Database> databaseMap = new HashMap<>();
 
-        // TODO Add your code here
+        try {
+            pw.println("SHOW DB");
+            Status status = Status.readStatus(br);
+
+            if (status.getStatusCode() >= 500){
+                return databaseMap;
+            }
+            if (status.getStatusCode() != 110) {
+                throw new DictConnectionException();
+            }
+
+            String line;
+            while ((line = br.readLine()) != null && !line.equals(".")) {
+                String[] atoms = DictStringParser.splitAtoms(line);
+                databaseMap.put(atoms[0], new Database(atoms[0], atoms[1]));
+            }
+
+            Status s = Status.readStatus(br);
+            if (s.getStatusCode() != 250) {
+                throw new DictConnectionException();
+            }
+
+        } catch (IOException e) {
+            throw new DictConnectionException(e);
+        }
 
         return databaseMap;
     }
@@ -168,7 +217,31 @@ public class DictionaryConnection {
     public synchronized Set<MatchingStrategy> getStrategyList() throws DictConnectionException {
         Set<MatchingStrategy> set = new LinkedHashSet<>();
 
-        // TODO Add your code here
+        try {
+            pw.println("SHOW STRAT");
+            Status status = Status.readStatus(br);
+
+            if (status.getStatusCode() >= 500){
+                return set;
+            }
+            if (status.getStatusCode() != 111) {
+                throw new DictConnectionException();
+            }
+
+            String line;
+            while ((line = br.readLine()) != null && !line.equals(".")) {
+                String[] atoms = DictStringParser.splitAtoms(line);
+                set.add(new MatchingStrategy(atoms[0], atoms[1]));
+            }
+
+            Status s = Status.readStatus(br);
+            if (s.getStatusCode() != 250) {
+                throw new DictConnectionException();
+            }
+
+        } catch (IOException e) {
+            throw new DictConnectionException(e);
+        }
 
         return set;
     }
@@ -181,7 +254,30 @@ public class DictionaryConnection {
     public synchronized String getDatabaseInfo(Database d) throws DictConnectionException {
 	StringBuilder sb = new StringBuilder();
 
-        // TODO Add your code here
+    try {
+        pw.println("SHOW INFO " + d.getName());
+        Status status = Status.readStatus(br);
+
+        if (status.getStatusCode() >= 500){
+            return sb.toString();
+        }
+        if (status.getStatusCode() != 112) {
+            throw new DictConnectionException();
+        }
+
+        String line;
+        while ((line = br.readLine()) != null && !line.equals(".")) {
+            sb.append(line).append("\n");
+        }
+
+        Status s = Status.readStatus(br);
+        if (s.getStatusCode() != 250) {
+            throw new DictConnectionException();
+        }
+
+    } catch (IOException e) {
+        throw new DictConnectionException(e);
+    }
 
         return sb.toString();
     }
