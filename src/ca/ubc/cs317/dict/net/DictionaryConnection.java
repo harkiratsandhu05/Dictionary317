@@ -8,13 +8,17 @@ import java.io.BufferedReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.*;
-
+import java.io.InputStreamReader;
 /**
  * Created by Jonatan on 2017-09-09.
  */
 public class DictionaryConnection {
 
     private static final int DEFAULT_PORT = 2628;
+
+    private Socket socket;
+    private BufferedReader br;
+    private PrintWriter pw;
 
     /** Establishes a new connection with a DICT server using an explicit host and port number, and handles initial
      * welcome messages.
@@ -25,8 +29,19 @@ public class DictionaryConnection {
      * don't match their expected value.
      */
     public DictionaryConnection(String host, int port) throws DictConnectionException {
-        // TODO Replace this with code that creates the requested connection
-        throw new DictConnectionException("Not implemented");
+        try {
+            socket = new Socket(host,port);
+            br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            pw = new PrintWriter(socket.getOutputStream(), true);
+
+            Status status = Status.readStatus(br);
+            if (status.getStatusCode() != 220) {
+                throw new DictConnectionException();
+            } 
+        } catch (Exception e) {
+            close();
+            throw new DictConnectionException(e);
+        }
     }
 
     /** Establishes a new connection with a DICT server using an explicit host, with the default DICT port number, and
